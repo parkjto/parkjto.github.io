@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>하이로우 카드 게임 - 럭셔리 에디션</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background: #111827; /* Dark background */
+            background-image: radial-gradient(circle at top right,
+ rgba(124, 58, 237, 0.3), transparent 40%),
+                              radial-gradient(circle at bottom left, rgba(219, 39, 119, 0.3), transparent 40%);
+            overflow: hidden;
+        }
+        .orbitron {
+            font-family: 'Orbitron', sans-serif;
+        }
+        .glass-container {
+            background: rgba(31, 41, 55, 0.6);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .card {
+            width: 140px;
+            height: 210px;
+            perspective: 1500px;
+            transition: transform 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-10px);
+        }
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.8s;
+            transform-style: preserve-3d;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            border-radius: 1rem;
+        }
+        .card.flipped .card-inner {
+            transform: rotateY(180deg);
+        }
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            border-radius: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+        .card-front {
+            background-color: #f9fafb;
+            color: black;
+            border: 2px solid #e5e7eb;
+        }
+        .card-back {
+            background: linear-gradient(135deg, #4f46e5, #c026d3);
+            transform: rotateY(180deg);
+            border: 2px solid #a78bfa;
+        }
+        .card-back::before {
+            content: '♦';
+            font-size: 5rem;
+            color: rgba(255, 255, 255, 0.3);
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+        .suit-red { color: #f43f5e; }
+        .suit-black { color: #111827; }
+        .action-button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.75rem 0;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.25rem;
+            font-weight: 700;
+            border-radius: 0.75rem;
+            color: white;
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            text-shadow: 0 0 2px rgba(0,0,0,0.7);
+            transition: all 0.2s ease-out;
+            backdrop-filter: blur(4px);
+            box-shadow: inset 0 2px 2px rgba(255, 255, 255, 0.05),
+                        0 4px 10px rgba(0, 0, 0, 0.4);
+        }
+        .action-button:hover:not(:disabled) {
+            transform: scale(1.03) translateY(-3px);
+            background: var(--shadow-color);
+            border-color: var(--shadow-color);
+            color: white;
+            box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1),
+                        0 0 15px var(--shadow-color),
+                        0 0 45px var(--shadow-color);
+            text-shadow: 0 0 5px rgba(255,255,255,0.8);
+        }
+        .action-button:active:not(:disabled) {
+            transform: scale(0.99) translateY(1px);
+            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.3);
+        }
+        .action-button svg {
+            width: 1.25em;
+            height: 1.25em;
+            stroke-width: 2.5;
+            transition: color 0.2s ease-out;
+        }
+        .btn-higher { --shadow-color: #ef4444; }
+        .btn-higher svg { color: #ef4444; }
+        .btn-lower { --shadow-color: #3b82f6; }
+        .btn-lower svg { color: #3b82f6; }
+        .btn-swap { --shadow-color: #8b5cf6; }
+        .btn-swap svg { color: #8b5cf6; }
+        .btn-again { --shadow-color: #22c55e; }
+        .btn-again svg { color: #22c55e; }
+        .neon-text {
+            text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #a78bfa, 0 0 20px #a78bfa, 0 0 25px #a78bfa, 0 0 30px #a78bfa, 0 0 35px #a78bfa;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen">
+
+    <div class="glass-container p-6 sm:p-8 rounded-2xl shadow-2xl w-full max-w-xl mx-4 text-center fade-in">
+        
+        <h1 class="orbitron text-5xl sm:text-6xl font-bold text-white tracking-wider mb-2 neon-text">HIGH LOW</h1>
+        <p class="text-gray-400 mb-8 text-lg">운명을 시험하세요!</p>
+
+        <!-- 베팅 및 크레딧 UI 제거됨 -->
+
+        <div class="flex justify-around items-center mb-6 h-[230px]">
+            <!-- 현재 카드 -->
+            <div class="flex flex-col items-center">
+                <p class="mb-2 text-gray-300 font-bold">현재 카드</p>
+                <div id="currentCard" class="card">
+                     <div class="card-inner">
+                        <div class="card-front text-7xl font-bold">
+                            <span class="rank"></span>
+                            <span class="suit"></span>
+                        </div>
+                        <div class="card-back"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 다음 카드 (뒤집힌 상태) -->
+            <div class="flex flex-col items-center">
+                <p class="mb-2 text-gray-300 font-bold">다음 카드</p>
+                 <div id="nextCard" class="card">
+                    <div class="card-inner">
+                        <div class="card-front text-7xl font-bold">
+                            <span class="rank"></span>
+                            <span class="suit"></span>
+                        </div>
+                        <div class="card-back"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="message" class="h-10 mb-4 text-xl font-semibold transition-opacity duration-300 flex items-center justify-center">
+        </div>
+        
+        <div id="controls" class="h-20">
+             <div id="betting-controls" class="flex justify-center space-x-2 sm:space-x-4">
+                <button id="higherBtn" class="action-button btn-higher w-1/3 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" /></svg>
+                    <span>HIGH</span>
+                </button>
+                <button id="swapBtn" class="action-button btn-swap w-1/3 disabled:opacity-50 disabled:cursor-not-allowed">
+                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" /></svg>
+                    <span>SWAP</span>
+                </button>
+                <button id="lowerBtn" class="action-button btn-lower w-1/3 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
+                    <span>LOW</span>
+                </button>
+            </div>
+            <div id="end-game-controls" class="hidden">
+                <button id="playAgainBtn" class="action-button btn-again w-full">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0011.667 0l3.181-3.183m-4.991-2.691V5.25m0 0H9.345M12 5.25v4.992" /></svg>
+                    <span>다음 라운드</span>
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // --- Audio Setup ---
+        let audioContext;
+        let masterGain;
+
+        function initAudio() {
+            if (!audioContext) {
+                try {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    masterGain = audioContext.createGain();
+                    masterGain.gain.setValueAtTime(0.3, audioContext.currentTime); // Master volume
+                    masterGain.connect(audioContext.destination);
+                } catch (e) {
+                    console.error("Web Audio API is not supported in this browser");
+                }
+            }
+        }
+
+        function playSound(type, options = {}) {
+            if (!audioContext) return;
+
+            const now = audioContext.currentTime;
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(masterGain);
+
+            switch (type) {
+                case 'click':
+                    oscillator.type = 'triangle';
+                    oscillator.frequency.setValueAtTime(800, now);
+                    gainNode.gain.setValueAtTime(0.5, now);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+                    oscillator.start(now);
+                    oscillator.stop(now + 0.1);
+                    break;
+                case 'flip':
+                    const noiseSource = audioContext.createBufferSource();
+                    const bufferSize = audioContext.sampleRate * 0.2;
+                    const buffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
+                    let data = buffer.getChannelData(0);
+                    for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+                    noiseSource.buffer = buffer;
+                    const bandpass = audioContext.createBiquadFilter();
+                    bandpass.type = 'bandpass';
+                    bandpass.frequency.value = 1500;
+                    gainNode.gain.setValueAtTime(0.3, now);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+                    noiseSource.connect(bandpass);
+                    bandpass.connect(gainNode);
+                    noiseSource.start(now);
+                    noiseSource.stop(now + 0.15);
+                    break;
+                case 'win':
+                    oscillator.type = 'sine';
+                    gainNode.gain.setValueAtTime(0.3, now);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+                    oscillator.frequency.setValueAtTime(523.25, now); // C5
+                    oscillator.frequency.linearRampToValueAtTime(1046.50, now + 0.2); // C6
+                    oscillator.start(now);
+                    oscillator.stop(now + 0.5);
+                    break;
+                case 'lose':
+                    oscillator.type = 'sawtooth';
+                    gainNode.gain.setValueAtTime(0.3, now);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+                    oscillator.frequency.setValueAtTime(220, now); // A3
+                    oscillator.frequency.linearRampToValueAtTime(110, now + 0.4); // A2
+                    oscillator.start(now);
+                    oscillator.stop(now + 0.5);
+                    break;
+                case 'swap':
+                    oscillator.type = 'sine';
+                    gainNode.gain.setValueAtTime(0.4, now);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+                    oscillator.frequency.setValueAtTime(1000, now);
+                    oscillator.frequency.exponentialRampToValueAtTime(200, now + 0.2);
+                    oscillator.start(now);
+                    oscillator.stop(now + 0.3);
+                    break;
+            }
+        }
+
+        // --- DOM Elements ---
+        const messageDisplay = document.getElementById('message');
+        const higherBtn = document.getElementById('higherBtn');
+        const lowerBtn = document.getElementById('lowerBtn');
+        const swapBtn = document.getElementById('swapBtn');
+        const playAgainBtn = document.getElementById('playAgainBtn');
+        const bettingControls = document.getElementById('betting-controls');
+        const endGameControls = document.getElementById('end-game-controls');
+        const currentCardEl = document.getElementById('currentCard');
+        const nextCardEl = document.getElementById('nextCard');
+
+        // --- Game Config ---
+        const ranks = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+        const suits = {'♥':'red', '♦':'red', '♠':'black', '♣':'black'};
+
+        // --- Game State ---
+        let deck = [];
+        let currentCard, nextCard;
+        let isPlaying = true;
+        
+        // --- Core Game Logic ---
+        function createDeck() {
+            const newDeck = [];
+            for (const suit in suits) {
+                ranks.forEach((rank, index) => {
+                    newDeck.push({ rank, suit, value: index + 2 });
+                });
+            }
+            return newDeck;
+        }
+
+        function shuffleDeck(deck) {
+            for (let i = deck.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [deck[i], deck[j]] = [deck[j], deck[i]];
+            }
+        }
+
+        function drawCard() {
+            if (deck.length < 2) {
+                deck = createDeck();
+                shuffleDeck(deck);
+                showMessage("덱을 새로 섞습니다!", "yellow");
+            }
+            return deck.pop();
+        }
+
+        function displayCard(cardElement, cardData) {
+            const rankEl = cardElement.querySelector('.rank');
+            const suitEl = cardElement.querySelector('.suit');
+            const frontEl = cardElement.querySelector('.card-front');
+
+            if(cardData){
+                rankEl.textContent = cardData.rank;
+                const suitSymbol = Object.keys(suits).find(key => suits[key] === suits[cardData.suit]);
+                suitEl.textContent = suitSymbol;
+                frontEl.className = `card-front text-7xl font-bold suit-${suits[cardData.suit]}`;
+            }
+        }
+
+        function startGame() {
+            isPlaying = true;
+            deck = createDeck();
+            shuffleDeck(deck);
+
+            currentCard = drawCard();
+            displayCard(currentCardEl.querySelector('.card-inner'), currentCard);
+            currentCardEl.classList.remove('flipped');
+
+            nextCardEl.classList.add('flipped');
+            
+            bettingControls.style.display = 'flex';
+            endGameControls.classList.add('hidden');
+            
+            higherBtn.disabled = false;
+            lowerBtn.disabled = false;
+            swapBtn.disabled = false;
+
+            showMessage("High 또는 Low를 선택하세요.", "yellow");
+        }
+
+        function checkGuess(guess) {
+            if (!isPlaying) return;
+
+            isPlaying = false;
+            higherBtn.disabled = true;
+            lowerBtn.disabled = true;
+            swapBtn.disabled = true;
+
+            playSound('flip');
+            nextCard = drawCard();
+            displayCard(nextCardEl.querySelector('.card-inner'), nextCard);
+            nextCardEl.classList.remove('flipped');
+            
+            let resultMessage = "";
+            let color = "red";
+
+            setTimeout(() => {
+                if (nextCard.value === currentCard.value) {
+                    resultMessage = `무승부! 다시 해보세요.`;
+                    color = "gray";
+                } else if ((guess === 'higher' && nextCard.value > currentCard.value) || (guess === 'lower' && nextCard.value < currentCard.value)) {
+                    resultMessage = `성공!`;
+                    color = "green";
+                    playSound('win');
+                } else {
+                    resultMessage = `실패!`;
+                    color = "red";
+                    playSound('lose');
+                }
+            
+                showMessage(resultMessage, color);
+
+                bettingControls.style.display = 'none';
+                endGameControls.classList.remove('hidden');
+                
+            }, 800); // Card flip animation time
+        }
+        
+        function swapCurrentCard() {
+            if (!isPlaying) return;
+            
+            playSound('swap');
+            
+            currentCardEl.classList.add('flipped');
+            setTimeout(() => {
+                currentCard = drawCard();
+                displayCard(currentCardEl.querySelector('.card-inner'), currentCard);
+                currentCardEl.classList.remove('flipped');
+                showMessage(`카드를 바꿨습니다!`, "yellow");
+            }, 400); // Half of card flip animation
+        }
+
+        // --- UI Helper Functions ---
+        function showMessage(text, color) {
+            messageDisplay.textContent = text;
+            const colorMap = {
+                red: 'text-red-400', 
+                green: 'text-green-400', 
+                gray: 'text-gray-400', 
+                yellow: 'text-yellow-300'
+            };
+            messageDisplay.className = `h-10 mb-4 text-xl font-semibold transition-opacity duration-300 flex items-center justify-center ${colorMap[color]}`;
+        }
+
+        // --- Event Listeners ---
+        document.body.addEventListener('click', initAudio, { once: true });
+
+        higherBtn.addEventListener('click', () => {
+            playSound('click');
+            checkGuess('higher');
+        });
+
+        lowerBtn.addEventListener('click', () => {
+            playSound('click');
+            checkGuess('lower');
+        });
+
+        swapBtn.addEventListener('click', () => {
+            playSound('click');
+            swapCurrentCard();
+        });
+        
+        playAgainBtn.addEventListener('click', () => {
+             playSound('click');
+             const container = document.querySelector('.glass-container');
+             container.style.transition = 'opacity 0.3s ease';
+             container.style.opacity = '0';
+
+            setTimeout(() => {
+                startGame();
+                container.style.opacity = '1';
+            }, 300);
+        });
+
+        // --- Initial Game Start ---
+        window.addEventListener('load', startGame);
+    </script>
+</body>
+</html>
+
+

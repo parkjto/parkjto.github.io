@@ -20,7 +20,7 @@
         .glass-container {
             background: rgba(31, 41, 55, 0.6);
             backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: bluㅌr(12px);
+            -webkit-backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
         .card {
@@ -380,29 +380,14 @@
                 const isCorrectGuess = (guess === 'higher' && nextCard.value > currentCard.value) || (guess === 'lower' && nextCard.value < currentCard.value);
                 const isTie = nextCard.value === currentCard.value;
 
-                // --- 확률 조작 로직 ---
-                // CHEAT_CHANCE 값을 변경하여 확률을 조절할 수 있습니다. (0.01 = 1%)
-                const CHEAT_CHANCE = 0.8; // 80% 확률로 성공을 실패로 바꿉니다.
-                const applyCheat = Math.random() < CHEAT_CHANCE;
-                // --- 여기까지 ---
-
                 if (isTie) {
                     resultMessage = `무승부! 다시 해보세요.`;
                     color = "gray";
                 } else if (isCorrectGuess) {
-                    if (applyCheat) {
-                        // 조작 발동! 이겼지만 졌다고 처리
-                        resultMessage = `실패!`;
-                        color = "red";
-                        playSound('lose');
-                    } else {
-                        // 정상적으로 승리
-                        resultMessage = `성공!`;
-                        color = "green";
-                        playSound('win');
-                    }
+                    resultMessage = `성공!`;
+                    color = "green";
+                    playSound('win');
                 } else {
-                    // 원래 졌을 경우
                     resultMessage = `실패!`;
                     color = "red";
                     playSound('lose');

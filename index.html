@@ -10,8 +10,7 @@
         body {
             font-family: 'Noto Sans KR', sans-serif;
             background: #111827; /* Dark background */
-            background-image: radial-gradient(circle at top right,
- rgba(124, 58, 237, 0.3), transparent 40%),
+            background-image: radial-gradient(circle at top right, rgba(124, 58, 237, 0.3), transparent 40%),
                               radial-gradient(circle at bottom left, rgba(219, 39, 119, 0.3), transparent 40%);
             overflow: hidden;
         }
@@ -21,7 +20,7 @@
         .glass-container {
             background: rgba(31, 41, 55, 0.6);
             backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: bluㅌr(12px);
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
         .card {
@@ -108,24 +107,25 @@
             transform: scale(0.99) translateY(1px);
             box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.3);
         }
-        .action-button svg {
+        .action-button svg, .action-button:hover svg {
             width: 1.25em;
             height: 1.25em;
             stroke-width: 2.5;
             transition: color 0.2s ease-out;
+            color: white;
         }
         .btn-higher { --shadow-color: #ef4444; }
-        .btn-higher svg { color: #ef4444; }
+        .btn-higher svg:not(:hover) { color: #ef4444; }
         .btn-lower { --shadow-color: #3b82f6; }
-        .btn-lower svg { color: #3b82f6; }
+        .btn-lower svg:not(:hover) { color: #3b82f6; }
         .btn-swap { --shadow-color: #8b5cf6; }
-        .btn-swap svg { color: #8b5cf6; }
+        .btn-swap svg:not(:hover) { color: #8b5cf6; }
         .btn-again { --shadow-color: #22c55e; }
-        .btn-again svg { color: #22c55e; }
+        .btn-again svg:not(:hover) { color: #22c55e; }
         .neon-text {
             text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #a78bfa, 0 0 20px #a78bfa, 0 0 25px #a78bfa, 0 0 30px #a78bfa, 0 0 35px #a78bfa;
         }
-        
+
         @keyframes fadeIn {
             from { opacity: 0; transform: scale(0.95); }
             to { opacity: 1; transform: scale(1); }
@@ -142,10 +142,7 @@
         <h1 class="orbitron text-5xl sm:text-6xl font-bold text-white tracking-wider mb-2 neon-text">HIGH LOW</h1>
         <p class="text-gray-400 mb-8 text-lg">운명을 시험하세요!</p>
 
-        <!-- 베팅 및 크레딧 UI 제거됨 -->
-
         <div class="flex justify-around items-center mb-6 h-[230px]">
-            <!-- 현재 카드 -->
             <div class="flex flex-col items-center">
                 <p class="mb-2 text-gray-300 font-bold">현재 카드</p>
                 <div id="currentCard" class="card">
@@ -159,7 +156,6 @@
                 </div>
             </div>
             
-            <!-- 다음 카드 (뒤집힌 상태) -->
             <div class="flex flex-col items-center">
                 <p class="mb-2 text-gray-300 font-bold">다음 카드</p>
                  <div id="nextCard" class="card">
@@ -212,7 +208,7 @@
                 try {
                     audioContext = new (window.AudioContext || window.webkitAudioContext)();
                     masterGain = audioContext.createGain();
-                    masterGain.gain.setValueAtTime(0.3, audioContext.currentTime); // Master volume
+                    masterGain.gain.setValueAtTime(0.3, audioContext.currentTime);
                     masterGain.connect(audioContext.destination);
                 } catch (e) {
                     console.error("Web Audio API is not supported in this browser");
@@ -220,9 +216,8 @@
             }
         }
 
-        function playSound(type, options = {}) {
+        function playSound(type) {
             if (!audioContext) return;
-
             const now = audioContext.currentTime;
             const oscillator = audioContext.createOscillator();
             const gainNode = audioContext.createGain();
@@ -259,8 +254,8 @@
                     oscillator.type = 'sine';
                     gainNode.gain.setValueAtTime(0.3, now);
                     gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
-                    oscillator.frequency.setValueAtTime(523.25, now); // C5
-                    oscillator.frequency.linearRampToValueAtTime(1046.50, now + 0.2); // C6
+                    oscillator.frequency.setValueAtTime(523.25, now);
+                    oscillator.frequency.linearRampToValueAtTime(1046.50, now + 0.2);
                     oscillator.start(now);
                     oscillator.stop(now + 0.5);
                     break;
@@ -268,8 +263,8 @@
                     oscillator.type = 'sawtooth';
                     gainNode.gain.setValueAtTime(0.3, now);
                     gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
-                    oscillator.frequency.setValueAtTime(220, now); // A3
-                    oscillator.frequency.linearRampToValueAtTime(110, now + 0.4); // A2
+                    oscillator.frequency.setValueAtTime(220, now);
+                    oscillator.frequency.linearRampToValueAtTime(110, now + 0.4);
                     oscillator.start(now);
                     oscillator.stop(now + 0.5);
                     break;
@@ -297,8 +292,8 @@
         const nextCardEl = document.getElementById('nextCard');
 
         // --- Game Config ---
-        const ranks = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
         const suits = {'♥':'red', '♦':'red', '♠':'black', '♣':'black'};
+        const allRanks = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
 
         // --- Game State ---
         let deck = [];
@@ -309,8 +304,8 @@
         function createDeck() {
             const newDeck = [];
             for (const suit in suits) {
-                ranks.forEach((rank, index) => {
-                    newDeck.push({ rank, suit, value: index + 2 });
+                allRanks.forEach(rank => {
+                    newDeck.push({ rank, suit, value: allRanks.indexOf(rank) + 2 });
                 });
             }
             return newDeck;
@@ -368,7 +363,6 @@
 
         function checkGuess(guess) {
             if (!isPlaying) return;
-
             isPlaying = false;
             higherBtn.disabled = true;
             lowerBtn.disabled = true;
@@ -383,42 +377,55 @@
             let color = "red";
 
             setTimeout(() => {
-                if (nextCard.value === currentCard.value) {
+                const isCorrectGuess = (guess === 'higher' && nextCard.value > currentCard.value) || (guess === 'lower' && nextCard.value < currentCard.value);
+                const isTie = nextCard.value === currentCard.value;
+
+                // --- 확률 조작 로직 ---
+                // CHEAT_CHANCE 값을 변경하여 확률을 조절할 수 있습니다. (0.01 = 1%)
+                const CHEAT_CHANCE = 0.8; // 80% 확률로 성공을 실패로 바꿉니다.
+                const applyCheat = Math.random() < CHEAT_CHANCE;
+                // --- 여기까지 ---
+
+                if (isTie) {
                     resultMessage = `무승부! 다시 해보세요.`;
                     color = "gray";
-                } else if ((guess === 'higher' && nextCard.value > currentCard.value) || (guess === 'lower' && nextCard.value < currentCard.value)) {
-                    resultMessage = `성공!`;
-                    color = "green";
-                    playSound('win');
+                } else if (isCorrectGuess) {
+                    if (applyCheat) {
+                        // 조작 발동! 이겼지만 졌다고 처리
+                        resultMessage = `실패!`;
+                        color = "red";
+                        playSound('lose');
+                    } else {
+                        // 정상적으로 승리
+                        resultMessage = `성공!`;
+                        color = "green";
+                        playSound('win');
+                    }
                 } else {
+                    // 원래 졌을 경우
                     resultMessage = `실패!`;
                     color = "red";
                     playSound('lose');
                 }
             
                 showMessage(resultMessage, color);
-
                 bettingControls.style.display = 'none';
                 endGameControls.classList.remove('hidden');
-                
-            }, 800); // Card flip animation time
+            }, 800);
         }
         
         function swapCurrentCard() {
             if (!isPlaying) return;
-            
             playSound('swap');
-            
             currentCardEl.classList.add('flipped');
             setTimeout(() => {
                 currentCard = drawCard();
                 displayCard(currentCardEl.querySelector('.card-inner'), currentCard);
                 currentCardEl.classList.remove('flipped');
                 showMessage(`카드를 바꿨습니다!`, "yellow");
-            }, 400); // Half of card flip animation
+            }, 400);
         }
 
-        // --- UI Helper Functions ---
         function showMessage(text, color) {
             messageDisplay.textContent = text;
             const colorMap = {
@@ -433,27 +440,15 @@
         // --- Event Listeners ---
         document.body.addEventListener('click', initAudio, { once: true });
 
-        higherBtn.addEventListener('click', () => {
-            playSound('click');
-            checkGuess('higher');
-        });
-
-        lowerBtn.addEventListener('click', () => {
-            playSound('click');
-            checkGuess('lower');
-        });
-
-        swapBtn.addEventListener('click', () => {
-            playSound('click');
-            swapCurrentCard();
-        });
+        higherBtn.addEventListener('click', () => { playSound('click'); checkGuess('higher'); });
+        lowerBtn.addEventListener('click', () => { playSound('click'); checkGuess('lower'); });
+        swapBtn.addEventListener('click', () => { playSound('click'); swapCurrentCard(); });
         
         playAgainBtn.addEventListener('click', () => {
              playSound('click');
              const container = document.querySelector('.glass-container');
              container.style.transition = 'opacity 0.3s ease';
              container.style.opacity = '0';
-
             setTimeout(() => {
                 startGame();
                 container.style.opacity = '1';
@@ -465,5 +460,4 @@
     </script>
 </body>
 </html>
-
 
